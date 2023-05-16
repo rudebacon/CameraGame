@@ -46,13 +46,13 @@ with mp_hands.Hands(
         if results.multi_hand_landmarks:
             for hand_landmarks in results.multi_hand_landmarks:
 
-                print('hand_landmarks:', hand_landmarks)
-                print(
-                    f'Index finger tip coordinates: (',
-                    f'{hand_landmarks.landmark[mp_hands.HandLandmark.INDEX_FINGER_TIP].x * image_width}, '
-                    f'{hand_landmarks.landmark[mp_hands.HandLandmark.INDEX_FINGER_TIP].z * image_width}, '
-                    f'{hand_landmarks.landmark[mp_hands.HandLandmark.INDEX_FINGER_TIP].y * image_height})'
-                )
+                # print('hand_landmarks:', hand_landmarks)
+                # print(
+                #     f'Index finger tip coordinates: (',
+                #     f'{hand_landmarks.landmark[mp_hands.HandLandmark.INDEX_FINGER_TIP].x * image_width}, '
+                #     f'{hand_landmarks.landmark[mp_hands.HandLandmark.INDEX_FINGER_TIP].z * image_width}, '
+                #     f'{hand_landmarks.landmark[mp_hands.HandLandmark.INDEX_FINGER_TIP].y * image_height})'
+                # )
 
                 mp_drawing.draw_landmarks(
                     image, hand_landmarks, mp_hands.HAND_CONNECTIONS
@@ -63,12 +63,16 @@ with mp_hands.Hands(
         
 
 
-
+        
         # Region of Image (ROI), where we want to insert logo
-        roi = image[-size-10:-10, -size-10:-10]
+        roi = image[1:101, 1:101] # 3D array (with color rgb) and 480X640
+        
     
+        print(image.shape)
+        print(image)
+
         # Set an index of where the mask is
-        roi[np.where(mask)] = 0
+        roi[np.where(mask)] = 0 # DO I NEED THIS?
         roi += apple
 
         # If window closed, exit (This has to be before showing image, I'm not sure why)
