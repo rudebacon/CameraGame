@@ -16,8 +16,11 @@ cv2.namedWindow('Hand Tracking', cv2.WINDOW_AUTOSIZE) # Create window
 # Load apple image
 apple = cv2.imread('images/apple.jpg')
 size = 100
-apple = cv2.resize(apple, (size, size))
+width = 200
+height = 100
+apple = cv2.resize(apple, (width, height))
 
+#postions of image
 x = 300
 y = 300
 
@@ -47,7 +50,7 @@ with mp_hands.Hands(
         if not success:
             print("Ignoring empty camera frame.")
             continue
-        image_height, image_width, _ = image.shape
+        frame_height, frame_width, _ = image.shape
         frame += 1
 
         # Flip the image horizontally
@@ -65,17 +68,17 @@ with mp_hands.Hands(
                 
                 # print(
                 #     f'Index finger tip coordinates: (',
-                #     f'{hand_landmarks.landmark[mp_hands.HandLandmark.THUMB_TIP].x * image_width}, '
-                #     f'{hand_landmarks.landmark[mp_hands.HandLandmark.THUMB_TIP].z * image_width}, '
-                #     f'{hand_landmarks.landmark[mp_hands.HandLandmark.THUMB_TIP].y * image_height})'
+                #     f'{hand_landmarks.landmark[mp_hands.HandLandmark.THUMB_TIP].x * frame_width}, '
+                #     f'{hand_landmarks.landmark[mp_hands.HandLandmark.THUMB_TIP].z * frame_width}, '
+                #     f'{hand_landmarks.landmark[mp_hands.HandLandmark.THUMB_TIP].y * frame_height})'
                 # )
-                IndexTipX = hand_landmarks.landmark[mp_hands.HandLandmark.INDEX_FINGER_TIP].x * image_width
-                IndexTipY = hand_landmarks.landmark[mp_hands.HandLandmark.INDEX_FINGER_TIP].y * image_height
-                IndexTipZ = hand_landmarks.landmark[mp_hands.HandLandmark.INDEX_FINGER_TIP].z * image_width
+                IndexTipX = hand_landmarks.landmark[mp_hands.HandLandmark.INDEX_FINGER_TIP].x * frame_width
+                IndexTipY = hand_landmarks.landmark[mp_hands.HandLandmark.INDEX_FINGER_TIP].y * frame_height
+                IndexTipZ = hand_landmarks.landmark[mp_hands.HandLandmark.INDEX_FINGER_TIP].z * frame_width
 
-                ThumbTipX = hand_landmarks.landmark[mp_hands.HandLandmark.THUMB_TIP].x * image_width
-                ThumbTipY = hand_landmarks.landmark[mp_hands.HandLandmark.THUMB_TIP].y * image_height
-                ThumbTipZ = hand_landmarks.landmark[mp_hands.HandLandmark.THUMB_TIP].z * image_width
+                ThumbTipX = hand_landmarks.landmark[mp_hands.HandLandmark.THUMB_TIP].x * frame_width
+                ThumbTipY = hand_landmarks.landmark[mp_hands.HandLandmark.THUMB_TIP].y * frame_height
+                ThumbTipZ = hand_landmarks.landmark[mp_hands.HandLandmark.THUMB_TIP].z * frame_width
 
 
                 mp_drawing.draw_landmarks(
@@ -83,17 +86,17 @@ with mp_hands.Hands(
                 )
 
 
-        margin = 30
+        margin = 100
         
-        ThumbInRightEdge =  (ThumbTipX < x+size + margin and ThumbTipX > x+size - margin) and (ThumbTipY < y+size + margin and ThumbTipY > y - margin) 
-        ThumbInLeftEdge =  (ThumbTipX < x + margin and ThumbTipX > x - margin) and (ThumbTipY < y+size + margin and ThumbTipY > y - margin) 
-        ThumbInBottomEdge =  (ThumbTipX < x+size + margin and ThumbTipX > x - margin) and (ThumbTipY < y+size + margin and ThumbTipY > y+size - margin) 
-        ThumbInTopEdge =  (ThumbTipX < x+size + margin and ThumbTipX > x - margin) and (ThumbTipY < y + margin and ThumbTipY > y - margin) 
+        ThumbInRightEdge =  (ThumbTipX < x+width and ThumbTipX > x+width - margin) and (ThumbTipY < y+height and ThumbTipY > y) 
+        ThumbInLeftEdge =  (ThumbTipX < x + margin and ThumbTipX > x) and (ThumbTipY < y+height and ThumbTipY > y) 
+        ThumbInBottomEdge =  (ThumbTipX < x+width and ThumbTipX > x) and (ThumbTipY < y+height and ThumbTipY > y+height - margin) 
+        ThumbInTopEdge =  (ThumbTipX < x+width and ThumbTipX > x) and (ThumbTipY < y + margin and ThumbTipY > y) 
 
-        IndexInRightEdge =  (IndexTipX < x+size + margin and IndexTipX > x+size - margin) and (IndexTipY < y+size + margin and IndexTipY > y - margin) 
-        IndexInLeftEdge =  (IndexTipX < x + margin and IndexTipX > x - margin) and (IndexTipY < y+size + margin and IndexTipY > y - margin) 
-        IndexInBottomEdge =  (IndexTipX < x+size + margin and IndexTipX > x - margin) and (IndexTipY < y+size + margin and IndexTipY > y+size - margin) 
-        IndexInTopEdge =  (IndexTipX < x+size + margin and IndexTipX > x - margin) and (IndexTipY < y + margin and IndexTipY > y - margin) 
+        IndexInRightEdge =  (IndexTipX < x+width and IndexTipX > x+width - margin) and (IndexTipY < y+height and IndexTipY > y) 
+        IndexInLeftEdge =  (IndexTipX < x + margin and IndexTipX > x) and (IndexTipY < y+height and IndexTipY > y) 
+        IndexInBottomEdge =  (IndexTipX < x+width and IndexTipX > x) and (IndexTipY < y+height and IndexTipY > y+height - margin) 
+        IndexInTopEdge =  (IndexTipX < x+width and IndexTipX > x) and (IndexTipY < y + margin and IndexTipY > y) 
 
         # print("TL:", IndexInLeftEdge)
         # print("TR:", IndexInRightEdge)
@@ -113,26 +116,36 @@ with mp_hands.Hands(
             ImageMoveY = currentFrameYaverage - previousFrameYaverage
             x += ImageMoveX
             y += ImageMoveY
+            if x <= 0:
+                x = 0
+            if x >= frame_width - width:
+                x = frame_width - width
+            if y <= 0:
+                y = 0
+            if y >= frame_height - height:
+                y = frame_height - height
+
         else:
             ImageMoveX = 0
             ImageMoveY = 0
 
 
-
+        # Can work on how to improve frame rate? jerking hand will not move the image
 
         print("x", x)
         print("y", y)
         # Region of Image (ROI), where we want to insert logo *roi does NOT make a copy of the image array*
-        roi = image[y:y+size, x:x+size] # 3D array (with color rgb) and 480X640
-        #ROI SOMETIMES BUGGY
+        roi = image[y:y+height, x:x+width] # 3D array (with color rgb) and 480X640
+        #ROI SOMETIMES BUGGY when starting?
         print("roi",roi)
+        print("Roi shape", roi.shape)
         print("apple", apple)
 
         previousFrameXaverage = currentFrameXaverage
         previousFrameYaverage = currentFrameYaverage
 
         # Set the ROI region to zeros
-        roi[:] = 0 # So the image is on top and not see through
+        # roi[:] = 0 # So the image is on top and not see through
         roi += apple
 
         # If window closed, exit (This has to be before showing image, I'm not sure why)
