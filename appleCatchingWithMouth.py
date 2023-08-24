@@ -119,12 +119,35 @@ def visualize(
   return annotated_image
 
 # STEP 2: Create an FaceDetector object.
-base_options = python.BaseOptions(model_asset_path='detector.tflite')
-options = vision.FaceDetectorOptions(base_options=base_options)
-detector = vision.FaceDetector.create_from_options(options)
+base_options = python.BaseOptions(model_asset_path='face_landmarker_v2_with_blendshapes.task')
+options = vision.FaceLandmarkerOptions(base_options=base_options,
+                                       output_face_blendshapes=True,
+                                       output_facial_transformation_matrixes=True,
+                                       num_faces=1)
+detector = vision.FaceLandmarker.create_from_options(options)
 
 cap = cv2.VideoCapture(0)  # Use the default camera (usually the built-in webcam)
-cv2.namedWindow('Hand Tracking', cv2.WINDOW_AUTOSIZE) # Create window
+cv2.namedWindow('Catch Apples', cv2.WINDOW_AUTOSIZE) # Create window
+
+
+class Apple:
+   def __init__(self, startPosX, startPosY, Width, Height, fallSpeed):
+      self.startPosX = startPosX
+      self.startPosY = startPosY
+      self.Width = Width
+      self.Height = Height
+      self.fallSpeed = fallSpeed
+
+# # Load apple image
+# apple = cv2.imread('images/apple.jpg')
+# size = 100
+# appleWidth = 200
+# appleHeight = 100
+# apple = cv2.resize(apple, (appleWidth, appleHeight))
+# #postions of image
+# appleX = 300
+# appleY = 300
+
 
 while cap.isOpened():
     success, image = cap.read()
@@ -144,13 +167,19 @@ while cap.isOpened():
     # STEP 5: Process the detection result. In this case, visualize it.
     image_copy = np.copy(image.numpy_view())
     annotated_image = draw_landmarks_on_image(image.numpy_view(), detection_result)
-    rgb_annotated_image = cv2.cvtColor(annotated_image, cv2.COLOR_RGB2BGR)
+
+    #APPLE DRAWING
+    # # Region of Image (ROI), where we want to insert logo *roi does NOT make a copy of the image array*
+    # roi = annotated_image[appleY:appleY+appleHeight, appleX:appleX+appleWidth] # 3D array (with color rgb) and 480X640
+    # # Set the ROI region to zeros
+    # roi[:] = 0 # So the image is on top and not see through
+    # roi += apple        
 
     # If window closed, exit (This has to be before showing image, I'm not sure why)
-    if cv2.getWindowProperty('Hand Tracking', cv2.WND_PROP_VISIBLE) < 1:
+    if cv2.getWindowProperty('Catch Apples', cv2.WND_PROP_VISIBLE) < 1:
         break
     # Show image
-    cv2.imshow("Hand Tracking", rgb_annotated_image)
+    cv2.imshow("Catch Apples", annotated_image)
 
 
     cv2.waitKey(1) #needed to render image?
