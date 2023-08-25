@@ -130,23 +130,26 @@ cap = cv2.VideoCapture(0)  # Use the default camera (usually the built-in webcam
 cv2.namedWindow('Catch Apples', cv2.WINDOW_AUTOSIZE) # Create window
 
 
+# Load apple image
+apple = cv2.imread('images/apple.jpg')
+size = 100
+appleWidth = 200
+appleHeight = 100
+apple = cv2.resize(apple, (appleWidth, appleHeight))
 class Apple:
-   def __init__(self, startPosX, startPosY, Width, Height, fallSpeed):
-      self.startPosX = startPosX
-      self.startPosY = startPosY
-      self.Width = Width
-      self.Height = Height
-      self.fallSpeed = fallSpeed
+  def __init__(self, startPosX, startPosY, xPos, yPos, fallSpeed):
+    self.startPosX = startPosX
+    self.startPosY = startPosY
+    self.xPos = xPos
+    self.yPos = yPos
+    self.fallSpeed = fallSpeed
+    self.image = apple
+  def fall(self):
+     self.yPos = self.yPos - 1
+     
+     
+     
 
-# # Load apple image
-# apple = cv2.imread('images/apple.jpg')
-# size = 100
-# appleWidth = 200
-# appleHeight = 100
-# apple = cv2.resize(apple, (appleWidth, appleHeight))
-# #postions of image
-# appleX = 300
-# appleY = 300
 
 
 while cap.isOpened():
