@@ -137,8 +137,8 @@ cv2.namedWindow('Catch Apples', cv2.WINDOW_AUTOSIZE) # Create window
 
 class Apple:
   # Load apple image
-  appleWidth = 200
-  appleHeight = 100
+  appleWidth = 50
+  appleHeight = 50
   appleImg = cv2.resize(cv2.imread('images/apple.png', cv2.IMREAD_UNCHANGED), (appleWidth, appleHeight))
 
   existingApples = []
@@ -232,7 +232,7 @@ while cap.isOpened():
 # ---------------------------------------------------------------
     current_time = time.time()
     if current_time - last_apple_creation_time >= 0.5:
-      new_apple = Apple(random.randint(0, image.width - Apple.appleWidth), -Apple.appleHeight, 5)
+      new_apple = Apple(random.randint(0, image.width - Apple.appleWidth), -Apple.appleHeight, 20)
       last_apple_creation_time = current_time
 # ---------------------------------------------------------------
     for i in Apple.existingApples:
@@ -252,7 +252,10 @@ while cap.isOpened():
         print("Removed Apples, here is apples_to_remove: ", apples_to_remove)
     # APPLE DRAWING
     for i in Apple.existingApples:
-      i.roi(annotated_image)
+      if i.yPos >= annotated_image.shape[0]:
+        continue
+      else:
+        i.roi(annotated_image)
 
     # If window closed, exit (This has to be before showing image, I'm not sure why)
     if cv2.getWindowProperty('Catch Apples', cv2.WND_PROP_VISIBLE) < 1:
