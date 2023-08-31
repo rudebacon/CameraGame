@@ -12,6 +12,11 @@ from typing import Tuple, Union
 import math
 import cv2
 import keyboard
+import time
+import random
+from PIL import Image
+
+
 
 MARGIN = 10  # pixels
 ROW_SIZE = 10  # pixels
@@ -130,27 +135,80 @@ cap = cv2.VideoCapture(0)  # Use the default camera (usually the built-in webcam
 cv2.namedWindow('Catch Apples', cv2.WINDOW_AUTOSIZE) # Create window
 
 
-# Load apple image
-apple = cv2.imread('images/apple.jpg')
-size = 100
-appleWidth = 200
-appleHeight = 100
-apple = cv2.resize(apple, (appleWidth, appleHeight))
 class Apple:
-  def __init__(self, startPosX, startPosY, xPos, yPos, fallSpeed):
-    self.startPosX = startPosX
-    self.startPosY = startPosY
+  # Load apple image
+  appleWidth = 200
+  appleHeight = 100
+  appleImg = cv2.resize(cv2.imread('images/apple.png', cv2.IMREAD_UNCHANGED), (appleWidth, appleHeight))
+
+  existingApples = []
+
+  def __init__(self, xPos, yPos, fallSpeed):
     self.xPos = xPos
     self.yPos = yPos
     self.fallSpeed = fallSpeed
-    self.image = apple
-  def fall(self):
-     self.yPos = self.yPos - 1
-     
-     
-     
+    self.existingApples.append(self)
+    print("Apple created: ", self)
+    print(Apple.existingApples)
 
+  
+  def fall(self, imageHeight):
+    # print("The object is:", self)
+    if self.yPos >= imageHeight:
+      self.to_be_removed = True  # Mark for removal    
+    else:
+      # print("Fell a bit")
+      self.yPos = self.yPos + self.fallSpeed    
+  
+  def roi(self, annotated_image):
+    if self.yPos > annotated_image.shape[0] - Apple.appleHeight: # When image is cut-off at the bottom
+      cropped_image = Apple.appleImg[0:annotated_image.shape[0] - self.yPos, :]
+      # Region of Image (ROI), where we want to insert logo/image *roi does NOT make a copy of the image array*
+      roi = annotated_image[self.yPos: , self.xPos:self.xPos+Apple.appleWidth] # 3D array (with color rgb) and 480X640
+      # Separate the alpha channel
+      alpha_channel = cropped_image[:, :, 3]
+      # Create a mask for the transparent regions
+      mask = alpha_channel == 0
+      # Invert the mask to represent non-transparent regions
+      inverse_mask = np.invert(mask)
+      # Overlay the image onto the ROI using the mask
+      roi[inverse_mask] = cropped_image[:, :, :3][inverse_mask]  # Apply only RGB channels from the image
+      # Update the background image with the modified ROI
+      annotated_image[self.yPos: , self.xPos:self.xPos+Apple.appleWidth] = roi
+      
+    elif self.yPos < 0: # When image is cut-off at the top
+      cropped_image = Apple.appleImg[self.yPos * -1:, :]
+      # Region of Image (ROI), where we want to insert logo/image *roi does NOT make a copy of the image array*
+      roi = annotated_image[0:Apple.appleHeight + self.yPos, self.xPos:self.xPos+Apple.appleWidth] # 3D array (with color rgb) and 480X640
+      # Separate the alpha channel
+      alpha_channel = cropped_image[:, :, 3]
+      # Create a mask for the transparent regions
+      mask = alpha_channel == 0
+      # Invert the mask to represent non-transparent regions
+      inverse_mask = np.invert(mask)
+      # Overlay the image onto the ROI using the mask
+      roi[inverse_mask] = cropped_image[:, :, :3][inverse_mask]  # Apply only RGB channels from the image
+      # Update the background image with the modified ROI
+      annotated_image[0:Apple.appleHeight + self.yPos, self.xPos:self.xPos+Apple.appleWidth] = roi
+    else: # Image is in middle of screen
+      # Region of Image (ROI), where we want to insert logo/image *roi does NOT make a copy of the image array*
+      roi = annotated_image[self.yPos:self.yPos+Apple.appleHeight, self.xPos:self.xPos+Apple.appleWidth] # 3D array (with color rgb) and 480X640
+      # Separate the alpha channel
+      alpha_channel = Apple.appleImg[:, :, 3]
+      # Create a mask for the transparent regions
+      mask = alpha_channel == 0
+      # Invert the mask to represent non-transparent regions
+      inverse_mask = np.invert(mask)
+      # Overlay the image onto the ROI using the mask
+      roi[inverse_mask] = Apple.appleImg[:, :, :3][inverse_mask]  # Apply only RGB channels from the image
+      # Update the background image with the modified ROI
+      annotated_image[self.yPos:self.yPos+Apple.appleHeight, self.xPos:self.xPos+Apple.appleWidth] = roi
 
+       
+       
+     
+     
+last_apple_creation_time = time.time() # For creating apple in a time interval
 
 while cap.isOpened():
     success, image = cap.read()
@@ -171,12 +229,30 @@ while cap.isOpened():
     image_copy = np.copy(image.numpy_view())
     annotated_image = draw_landmarks_on_image(image.numpy_view(), detection_result)
 
-    #APPLE DRAWING
-    # # Region of Image (ROI), where we want to insert logo *roi does NOT make a copy of the image array*
-    # roi = annotated_image[appleY:appleY+appleHeight, appleX:appleX+appleWidth] # 3D array (with color rgb) and 480X640
-    # # Set the ROI region to zeros
-    # roi[:] = 0 # So the image is on top and not see through
-    # roi += apple        
+# ---------------------------------------------------------------
+    current_time = time.time()
+    if current_time - last_apple_creation_time >= 0.5:
+      new_apple = Apple(random.randint(0, image.width - Apple.appleWidth), -Apple.appleHeight, 5)
+      last_apple_creation_time = current_time
+# ---------------------------------------------------------------
+    for i in Apple.existingApples:
+      i.fall(image.height)
+      print("Apple:", i, "yPos: ", i.yPos)
+    # Create a list to store apples that need to be removed
+    apples_to_remove = []
+    # Check for apples marked for removal and remove them
+    for i in Apple.existingApples:
+        if hasattr(i, 'to_be_removed'):
+            apples_to_remove.append(i)
+            print("Apples to be removed list: ", apples_to_remove)
+    for i in apples_to_remove:
+        Apple.existingApples.remove(i)
+        del i
+        print("Removed Apples, here is existingApples: ", Apple.existingApples)
+        print("Removed Apples, here is apples_to_remove: ", apples_to_remove)
+    # APPLE DRAWING
+    for i in Apple.existingApples:
+      i.roi(annotated_image)
 
     # If window closed, exit (This has to be before showing image, I'm not sure why)
     if cv2.getWindowProperty('Catch Apples', cv2.WND_PROP_VISIBLE) < 1:
