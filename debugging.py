@@ -1,23 +1,60 @@
-import cv2
+# import numpy as np
 
-# Load apple image
-apple = cv2.imread('images/apple.jpg')
-size = 100
-apple = cv2.resize(apple, (size, size))
+# def check_inside(boolean_array1, boolean_array2):
+#     # Initialize overlap and inside with boolean_array1 instead of True
+#     overlap = np.logical_and(boolean_array1, boolean_array2)
+#     inside = np.logical_and(boolean_array1, np.logical_not(overlap))
+#     return np.all(inside)
 
-# Create a mask of the logo
-img2gray = cv2.cvtColor(apple, cv2.COLOR_BGR2GRAY)
-ret, mask = cv2.threshold(img2gray, 1, 255, cv2.THRESH_BINARY)
+# # test with boolean_array1 and boolean_array2
+# boolean_array1 = [False, False,False, True,True, False,False, False,
+#                  False, False,False, False,False, False,False, False,
+#                  False, False,False, False,False, False,False, False,
+#                  False, False,False, False,False, False,False, False,
+#                  False, False,False, False,False, False,False, False,]
 
-# # Show the original apple image
-# cv2.imshow('Original Apple', apple)
-print(mask)
-print(mask.shape)
-# Show the mask
-cv2.imshow('Mask', mask)
+# boolean_array2 = [False, False,True, True,True, True,False, False,
+#                  False, False,False, False,False, False,False, False,
+#                  False, False,False, False,False, False,False, False,
+#                  False, False,False, False,False, False,False, False,
+#                  False, False,False, False,False, False,False, False,]
 
-# Wait for a key press to close the windows
-cv2.waitKey(0)
+# print(check_inside(boolean_array1, boolean_array2))
 
-# Close all windows
-cv2.destroyAllWindows()
+
+
+
+# # Python program explaining 
+# # logical_and() function 
+# import numpy as np 
+  
+# # input 
+# arr1 = [True, True, True, False] 
+# arr2 = [True, True, True, True] 
+
+# compare = [True, True, True, False]
+# # output 
+# out_arr = np.logical_and(arr1, arr2) 
+
+# result = (compare == out_arr).all()
+# print ("Output Array : ", result) 
+
+
+
+
+
+# maskMout = [[240, 0, 0], [0, 0, 0],[240, 0, 0],[0, 0, 0], [0, 0, 0],
+#             [240, 0, 0], [0, 0, 0],[240, 0, 0],[0, 0, 0], [0, 0, 0],
+#             [0, 0, 0], [0, 0, 0],[0, 0, 0],[0, 0, 0], [0, 0, 0],
+#             ]
+
+
+
+maskMout = [[240, 0, 0], [0, 0, 0],[240, 0, 0],[0, 0, 0], [0, 0, 0],
+            [240, 0, 0], [0, 0, 0],[240, 0, 0],[0, 0, 0], [0, 0, 0],
+            [0, 0, 0], [0, 0, 0],[0, 0, 0],[0, 0, 0], [0, 0, 0],
+            ]
+
+maskMout = [item for sublist in maskMout for item in sublist]
+
+print(maskMout)

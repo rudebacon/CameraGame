@@ -15,6 +15,7 @@ import keyboard
 import time
 import random
 from PIL import Image
+import sys
 
 
 
@@ -119,22 +120,6 @@ def get_lip_landmark_coordinates(rgb_image, detection_result):
 
     return lip_landmark_coordinates
 
-def calculate_polygon_area(points_set):
-    # Convert the set of points to a list
-    points_list = list(points_set)
-    
-    n = len(points_list)
-    area = 0.0
-
-    for i in range(n):
-        x1, y1 = points_list[i]
-        x2, y2 = points_list[(i + 1) % n]
-        area += (x1 * y2) - (x2 * y1)
-
-    area = abs(area) / 2.0
-    return area
-
-
 
 
 # STEP 2: Create an FaceDetector object.
@@ -148,6 +133,8 @@ detector = vision.FaceLandmarker.create_from_options(options)
 cap = cv2.VideoCapture(0)  # Use the default camera (usually the built-in webcam)
 cv2.namedWindow('Catch Apples', cv2.WINDOW_AUTOSIZE) # Create window
 
+
+apples_eaten = 0
 
 class Apple:
   # Load apple image
@@ -174,7 +161,7 @@ class Apple:
       # print("Fell a bit")
       self.yPos = self.yPos + self.fallSpeed    
   
-  def roi(self, annotated_image):
+  def roi(self, annotated_image, maskOfMouth):
     if self.yPos > annotated_image.shape[0] - Apple.appleHeight: # When image is cut-off at the bottom
       cropped_image = Apple.appleImg[0:annotated_image.shape[0] - self.yPos, :]
       # Region of Image (ROI), where we want to insert logo/image *roi does NOT make a copy of the image array*
@@ -189,6 +176,14 @@ class Apple:
       roi[inverse_mask] = cropped_image[:, :, :3][inverse_mask]  # Apply only RGB channels from the image
       # Update the background image with the modified ROI
       annotated_image[self.yPos: , self.xPos:self.xPos+Apple.appleWidth] = roi
+
+      # Making Mask of Apple ----> 480x640x3 [[0,0,0], [0,0,0], [45,52,198]]
+      maskOfApple = np.zeros_like(annotated_image)
+      roi = maskOfApple[self.yPos: , self.xPos:self.xPos+Apple.appleWidth] 
+      roi[inverse_mask] = cropped_image[:, :, :3][inverse_mask]
+      maskOfApple[self.yPos: , self.xPos:self.xPos+Apple.appleWidth] = roi
+
+
       
     elif self.yPos < 0: # When image is cut-off at the top
       cropped_image = Apple.appleImg[self.yPos * -1:, :]
@@ -204,6 +199,13 @@ class Apple:
       roi[inverse_mask] = cropped_image[:, :, :3][inverse_mask]  # Apply only RGB channels from the image
       # Update the background image with the modified ROI
       annotated_image[0:Apple.appleHeight + self.yPos, self.xPos:self.xPos+Apple.appleWidth] = roi
+
+      # Making Mask of Apple ----> 480x640x3 [[0,0,0], [0,0,0], [45,52,198]]
+      maskOfApple = np.zeros_like(annotated_image)
+      roi = maskOfApple[0:Apple.appleHeight + self.yPos, self.xPos:self.xPos+Apple.appleWidth] 
+      roi[inverse_mask] = cropped_image[:, :, :3][inverse_mask]
+      maskOfApple[0:Apple.appleHeight + self.yPos, self.xPos:self.xPos+Apple.appleWidth] = roi
+
     else: # Image is in middle of screen
       # Region of Image (ROI), where we want to insert logo/image *roi does NOT make a copy of the image array*
       roi = annotated_image[self.yPos:self.yPos+Apple.appleHeight, self.xPos:self.xPos+Apple.appleWidth] # 3D array (with color rgb) and 480X640
@@ -218,10 +220,40 @@ class Apple:
       # Update the background image with the modified ROI
       annotated_image[self.yPos:self.yPos+Apple.appleHeight, self.xPos:self.xPos+Apple.appleWidth] = roi
 
+      # Making Mask of Apple ----> 480x640x3 [[0,0,0], [0,0,0], [45,52,198]]
+      maskOfApple = np.zeros_like(annotated_image)
+      roi = maskOfApple[self.yPos:self.yPos+Apple.appleHeight, self.xPos:self.xPos+Apple.appleWidth] 
+      roi[inverse_mask] = Apple.appleImg[:, :, :3][inverse_mask]
+      maskOfApple[self.yPos:self.yPos+Apple.appleHeight, self.xPos:self.xPos+Apple.appleWidth] = roi
+
+    boolean_maskOfApple = (maskOfApple != 0).all(axis=-1) 
+    boolean_maskOfMouth = (maskOfMouth != 0).all(axis=-1)
+
+    overlap = np.logical_and(boolean_maskOfApple, boolean_maskOfMouth)
+    # print("s")
+    # inside = np.logical_and(boolean_maskOfApple, np.logical_not(overlap))
+    if (overlap == boolean_maskOfApple).all(): #WORK ON CONVERTING MASKOFAPPLE TO BOOLEAN
+       print("enterd")
+       self.to_be_removed = True
+       apples_eaten += 1
+
+
+    with open('output.txt', 'a') as file:
+      sys.stdout = file
+      print("This is a test message.")
+      print("The maskOfMouth array is:")
+      
+      for i in range(boolean_maskOfMouth.shape[0]):
+          for j in range(boolean_maskOfMouth.shape[1]):
+              print(boolean_maskOfMouth[i, j], end="")
+          print()
+      print("END")
+      print("END")
+
+      
        
-       
-     
-     
+
+    
 last_apple_creation_time = time.time() # For creating apple in a time interval
 
 while cap.isOpened():
@@ -268,9 +300,9 @@ while cap.isOpened():
                           40, 185)
     testSet = []
     for i in sequence: #Making list with sequence from the set
-       for j in lip_coordinates:
+      for j in lip_coordinates:
           if j[0] == i:
-             testSet.append((j[1], j[2]))
+            testSet.append((j[1], j[2]))
 
     # print(testSet)
     # Sort the lip landmarks based on x-coordinate (you may need a more sophisticated ordering logic)
@@ -278,7 +310,30 @@ while cap.isOpened():
     # Sort the lip landmarks based on x-coordinate (ascending order)
     # sorted_indices = np.argsort(lip_landmarks_np[:, 0])
     # lip_landmarks_np = lip_landmarks_np[sorted_indices]
-    cv2.fillPoly(annotated_image, [lip_landmarks_np], (255, 0, 0))
+
+
+    if len(lip_landmarks_np != 0):   
+      cv2.fillPoly(annotated_image, [lip_landmarks_np], (255, 0, 0)) # Draw mouth area
+
+      # Copy the area filled with fillPoly from the original annotated_image to the copied annotated_image
+      maskOfMouth = cv2.fillPoly(np.zeros_like(annotated_image), [lip_landmarks_np], (250, 0, 0)) #-------> array 480x640x3 [[0,0,0], [0,0,0], [255,0,0] ...]
+      # annotated_image_copy[maskOfMouth == [250, 0, 0]] = annotated_image[maskOfMouth == [250, 0, 0]]
+    else:
+       maskOfMouth = np.zeros_like(annotated_image)
+    
+
+
+    # with open('output.txt', 'a') as file:
+    #   sys.stdout = file
+    #   print("This is a test message.")
+    #   print("The maskOfMouth array is:")
+      
+    #   for i in range(maskOfMouth.shape[0]):
+    #       for j in range(maskOfMouth.shape[1]):
+    #           print(maskOfMouth[i, j], end="")
+    #       print()
+    #   print("END")
+    #   print("END")
 
 # ---------------------------------------------------------------
     current_time = time.time()
@@ -306,7 +361,11 @@ while cap.isOpened():
       if i.yPos >= annotated_image.shape[0]:
         continue
       else:
-        i.roi(annotated_image)
+        i.roi(annotated_image, maskOfMouth)
+
+
+
+    cv2.putText(annotated_image, str(apples_eaten), (50, 50), cv2.FONT_HERSHEY_SIMPLEX, 2, (0, 0, 0), 2)
 
     # If window closed, exit (This has to be before showing image, I'm not sure why)
     if cv2.getWindowProperty('Catch Apples', cv2.WND_PROP_VISIBLE) < 1:
