@@ -26,19 +26,28 @@
 
 # Python program explaining 
 # logical_and() function 
-import numpy as np 
+# import numpy as np 
   
-# input 
-arr1 = [False, False, True, False] 
-arr2 = [False, False, True, True] 
+# # input 
+# arr1 = [False, False, True, False] 
+# arr2 = [False, False, True, True] 
 
-compare = [True, False, True, True]
-# output 
-out_arr = np.logical_and(arr1, arr2) 
-print("outputarray", out_arr)
-result = (arr1 == out_arr).all()
-print ("Result : ", result) 
+# compare = [True, False, True, True]
+# # output 
+# out_arr = np.logical_and(arr1, arr2) 
+# print("outputarray", out_arr)
+# result = (arr1 == out_arr).all()
+# print ("Result : ", result) 
 
+import numpy as np
+
+maskOfMouth = [[[0, 0, 0], [0, 0, 0], [255, 0, 0]],
+               [[0, 0, 0], [255, 0, 0], [255, 0, 0]],
+               [[0, 0, 0], [0, 0, 0], [255, 0, 0]],
+               [[0, 0, 0], [0, 0, 0], [255, 0, 0]]]
+
+boolean_maskOfMouth = np.any(maskOfMouth, axis=2)
+print(boolean_maskOfMouth)
 
 
 

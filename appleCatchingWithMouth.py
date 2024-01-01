@@ -229,26 +229,10 @@ class Apple:
     # print(maskOfMouth)
     # boolean_maskOfApple = (maskOfApple != 0).all(axis=-1) 
     # boolean_maskOfMouth = (maskOfMouth != 0).all(axis=-1)
-      
 
-
-    # MAKE MORE EFFICIENT, RN IT'S MAKING MASK OF MOUTH AND EACH APPLE EACH FRAME
-
-    boolean_maskOfMouth = np.zeros((annotated_image.shape[0], annotated_image.shape[1]), dtype=bool)
-    for i in range(maskOfMouth.shape[0]):
-      for j in range(maskOfMouth.shape[1]):
-          if np.all(maskOfMouth[i, j] == 0):
-            boolean_maskOfMouth[i, j] = False
-          else:
-            boolean_maskOfMouth[i, j] = True
+    boolean_maskOfMouth = np.any(maskOfMouth, axis=2)
     
-    boolean_maskOfApple = np.zeros((annotated_image.shape[0], annotated_image.shape[1]), dtype=bool)
-    for i in range(maskOfApple.shape[0]):
-      for j in range(maskOfApple.shape[1]):
-          if np.all(maskOfApple[i, j] == 0):
-            boolean_maskOfApple[i, j] = False
-          else:
-            boolean_maskOfApple[i, j] = True
+    boolean_maskOfApple = np.any(maskOfApple, axis=2)
              
   
 
