@@ -226,29 +226,53 @@ class Apple:
       roi[inverse_mask] = Apple.appleImg[:, :, :3][inverse_mask]
       maskOfApple[self.yPos:self.yPos+Apple.appleHeight, self.xPos:self.xPos+Apple.appleWidth] = roi
 
-    boolean_maskOfApple = (maskOfApple != 0).all(axis=-1) 
-    boolean_maskOfMouth = (maskOfMouth != 0).all(axis=-1)
+    # print(maskOfMouth)
+    # boolean_maskOfApple = (maskOfApple != 0).all(axis=-1) 
+    # boolean_maskOfMouth = (maskOfMouth != 0).all(axis=-1)
+      
+
+
+    # MAKE MORE EFFICIENT, RN IT'S MAKING MASK OF MOUTH AND EACH APPLE EACH FRAME
+
+    boolean_maskOfMouth = np.zeros((annotated_image.shape[0], annotated_image.shape[1]), dtype=bool)
+    for i in range(maskOfMouth.shape[0]):
+      for j in range(maskOfMouth.shape[1]):
+          if np.all(maskOfMouth[i, j] == 0):
+            boolean_maskOfMouth[i, j] = False
+          else:
+            boolean_maskOfMouth[i, j] = True
+    
+    boolean_maskOfApple = np.zeros((annotated_image.shape[0], annotated_image.shape[1]), dtype=bool)
+    for i in range(maskOfApple.shape[0]):
+      for j in range(maskOfApple.shape[1]):
+          if np.all(maskOfApple[i, j] == 0):
+            boolean_maskOfApple[i, j] = False
+          else:
+            boolean_maskOfApple[i, j] = True
+             
+  
 
     overlap = np.logical_and(boolean_maskOfApple, boolean_maskOfMouth)
-    # print("s")
-    # inside = np.logical_and(boolean_maskOfApple, np.logical_not(overlap))
-    if (overlap == boolean_maskOfApple).all(): #WORK ON CONVERTING MASKOFAPPLE TO BOOLEAN
+    # # print("s")
+    # # inside = np.logical_and(boolean_maskOfApple, np.logical_not(overlap))
+    if (overlap == boolean_maskOfApple).all():
        print("enterd")
        self.to_be_removed = True
+       global apples_eaten
        apples_eaten += 1
 
 
-    with open('output.txt', 'a') as file:
-      sys.stdout = file
-      print("This is a test message.")
-      print("The maskOfMouth array is:")
+    # with open('output.txt', 'a') as file:
+    #   sys.stdout = file
+    #   print("This is a test message.")
+    #   print("The maskOfMouth array is:")
       
-      for i in range(boolean_maskOfMouth.shape[0]):
-          for j in range(boolean_maskOfMouth.shape[1]):
-              print(boolean_maskOfMouth[i, j], end="")
-          print()
-      print("END")
-      print("END")
+    #   for i in range(boolean_maskOfApple.shape[0]):
+    #       for j in range(boolean_maskOfApple.shape[1]):
+    #           print(boolean_maskOfApple[i, j], end="")
+    #       print()
+    #   print("END")
+    #   print("END")
 
       
        
@@ -316,11 +340,11 @@ while cap.isOpened():
       cv2.fillPoly(annotated_image, [lip_landmarks_np], (255, 0, 0)) # Draw mouth area
 
       # Copy the area filled with fillPoly from the original annotated_image to the copied annotated_image
-      maskOfMouth = cv2.fillPoly(np.zeros_like(annotated_image), [lip_landmarks_np], (250, 0, 0)) #-------> array 480x640x3 [[0,0,0], [0,0,0], [255,0,0] ...]
+      maskOfMouth = cv2.fillPoly(np.zeros_like(annotated_image), [lip_landmarks_np], (255, 0, 0)) #-------> array 480x640x3 [[0,0,0], [0,0,0], [255,0,0] ...]
       # annotated_image_copy[maskOfMouth == [250, 0, 0]] = annotated_image[maskOfMouth == [250, 0, 0]]
     else:
        maskOfMouth = np.zeros_like(annotated_image)
-    
+    # print(maskOfMouth)    
 
 
     # with open('output.txt', 'a') as file:
